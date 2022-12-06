@@ -1,17 +1,20 @@
 package com.android.personallifelessons.data.dto.request
 
-data class UserRequest(
-    val _id: String,
+
+data class SignUpRequest(
     val username: String,
     val email: String,
-    val photo: String,
-    val joinedOn: Long
+    val password: String,
+    val photo: String
 )
 
-fun UserRequest.toMap() = mapOf(
-    "id" to _id,
-    "username" to username,
-    "email" to email,
-    "photo" to photo,
-    "joinedOn" to joinedOn
+data class UserUpdateRequest(
+    val username: String,
+    val password: String,
+    val photo: String,
+)
+
+data class SignInRequest(
+    val email: String,
+    val password: String
 )

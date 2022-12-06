@@ -1,51 +1,119 @@
 package com.android.personallifelessons.presenter.comments
 
-import android.widget.Toast
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.android.personallifelessons.data.dto.response.CommentResponse
+import com.android.personallifelessons.presenter.components.TimestampConvertor.dateThenTime
+import com.android.personallifelessons.R
 import com.android.personallifelessons.components.Outcome
-import com.android.personallifelessons.domain.model.PersonalLifeLesson
-import org.koin.androidx.compose.getViewModel
+import com.android.personallifelessons.data.dto.response.Pll
+import com.android.personallifelessons.data.dto.response.PllResponse
+import com.android.personallifelessons.presenter.shared.ErrorPage
+import com.android.personallifelessons.presenter.shared.LoadingPage
+import com.android.personallifelessons.presenter.shared.PllCard
+import es.dmoral.toasty.Toasty
+import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
+import java.util.*
+
 
 @OptIn(ExperimentalLifecycleComposeApi::class)
 @Composable
 fun CommentScreen(
-    commentIds: List<String>, pll: PersonalLifeLesson
+    pll: Pll,
+    viewModel: CommentViewModel = koinViewModel{ parametersOf(pll) }
 ) {
 
-    val viewModel = getViewModel<CommentViewModel>{ parametersOf(commentIds) }
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    when (uiState) {
-        is Outcome.Error -> Toast.makeText(context, uiState.message!!, Toast.LENGTH_SHORT)
-            .show()
-        is Outcome.Loading -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ){
-                CircularProgressIndicator()
+    when(val state = uiState){
+        is Outcome.Error -> {
+            Toasty.error(context, state.error.message!!).show()
+            ErrorPage()
+        }
+        Outcome.Loading -> {
+            LoadingPage()
+        }
+        is Outcome.Success ->{
+            Box{
+                Column(Modifier.fillMaxSize()){
+                    PllCard(pll = pll)
+                    LazyColumn(modifier=Modifier.fillMaxSize()){
+                        items(state.data){ comment ->
+                            CommentCard(comment = comment)
+                        }
+                    }
+                }
             }
         }
-        is Outcome.Success -> CommentColumn(
-            modifier = Modifier
-                .padding(10.dp)
-                .fillMaxWidth(),
-            personalLifeLesson = pll,
-            comments = viewModel.comments.value
-        )
     }
 }
+
+
+@Composable
+fun CommentCard(comment: CommentResponse){
+    Card(
+        modifier = Modifier.padding(10.dp),
+        shape = RoundedCornerShape(10.dp)
+    ){
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        ){
+            // username Text(
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ){
+                    Image(modifier=Modifier.size(50.dp),painter = painterResource(id = R.drawable.user), contentDescription = null)
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text=comment.username, fontWeight= FontWeight.Bold, fontSize = 20.sp
+                    )
+                }
+                Text(
+                    text=dateThenTime(comment.commentedOn, "\n"), fontWeight=FontWeight.Light, fontSize=10.sp
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text=comment.comment, fontWeight=FontWeight.Normal, fontSize = 16.sp
+            )
+        }
+    }
+}
+
+@Preview()
+@Composable
+fun CommentCardPreview(){
+    val comment = CommentResponse(
+        "","","", "Anurag Singh", "It's amazing lesson to everyone", Calendar.getInstance().time.time
+    )
+    CommentCard(comment = comment)
+}
+
+
+
+

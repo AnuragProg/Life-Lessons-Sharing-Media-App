@@ -1,16 +1,14 @@
 package com.android.personallifelessons.domain.repository
 
 import com.android.personallifelessons.components.Outcome
-import com.android.personallifelessons.domain.model.Category
-import kotlinx.coroutines.flow.Flow
+import com.android.personallifelessons.data.dto.request.CategoryRequest
+import com.android.personallifelessons.data.dto.request.CategoryUpdateRequest
+import com.android.personallifelessons.data.dto.response.CategoryResponse
 
 interface CategoryRepository {
-
-    suspend fun getCategory(
-        categoryId: String
-    ): Flow<Outcome<Category>>
-
-    suspend fun getAllCategories(
-    ): Flow<Outcome<List<Category>>>
-
+    suspend fun getCategory(categoryId: String): Outcome<CategoryResponse>
+    suspend fun getCategories(): Outcome<List<CategoryResponse>>
+    suspend fun addCategory(categoryRequest: CategoryRequest): Outcome<String>
+    suspend fun deleteCategory(categoryId: String): Outcome<String>
+    suspend fun updateCategory(categoryUpdateRequest: CategoryUpdateRequest): Outcome<String>
 }

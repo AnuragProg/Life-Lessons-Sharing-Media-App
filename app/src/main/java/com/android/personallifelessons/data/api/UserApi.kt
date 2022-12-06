@@ -1,15 +1,45 @@
 package com.android.personallifelessons.data.api
 
-import com.android.personallifelessons.components.Outcome
-import com.android.personallifelessons.data.dto.request.UserRequest
-import com.android.personallifelessons.data.dto.response.UserResponse
-import com.android.personallifelessons.domain.model.User
-import kotlinx.coroutines.flow.Flow
+import com.android.personallifelessons.data.dto.request.SignInRequest
+import com.android.personallifelessons.data.dto.request.SignUpRequest
+import com.android.personallifelessons.data.dto.request.UserUpdateRequest
+import com.android.personallifelessons.data.dto.response.GeneralResponse
+import com.android.personallifelessons.data.dto.response.TokenResponse
+import com.android.personallifelessons.data.dto.response.User
+import retrofit2.Response
+import retrofit2.http.*
 
 interface UserApi {
 
-    suspend fun getCurrentUserInfo(userId: String): Flow<Outcome<UserResponse>>
-    suspend fun updateCurrentUser(user: User): Flow<Outcome<String>>
-    suspend fun deleteCurrentUser(userId: String): Flow<Outcome<String>>
-    suspend fun addCurrentUser(user: UserRequest): Flow<Outcome<String>>
+    @GET(".")
+    suspend fun getUsers(
+        @Header("Authorization") token:String,
+    ): Response<List<User>>
+
+    @PATCH(".")
+    suspend fun updateUser(
+        @Header("Authorization") token: String,
+        @Body userUpdateRequest: UserUpdateRequest
+    ): Response<GeneralResponse>
+
+    @DELETE(".")
+    suspend fun deleteUser(
+        @Header("Authorization") token: String
+    ): Response<GeneralResponse>
+
+    @POST("signIn")
+    suspend fun signInWithToken(
+        @Header("Authorization") token: String,
+    ): Response<TokenResponse>
+
+    // Requires not authentication token
+    @POST("signInWithPassword")
+    suspend fun signInWithPassword(
+        @Body signInRequest: SignInRequest
+    ): Response<TokenResponse>
+
+    @POST("signUp")
+    suspend fun signUp(
+        @Body signUpRequest: SignUpRequest
+    ): Response<TokenResponse>
 }

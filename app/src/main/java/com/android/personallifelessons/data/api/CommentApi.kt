@@ -1,26 +1,35 @@
 package com.android.personallifelessons.data.api
 
-import com.android.personallifelessons.components.Outcome
 import com.android.personallifelessons.data.dto.request.CommentRequest
+import com.android.personallifelessons.data.dto.request.CommentUpdateRequest
 import com.android.personallifelessons.data.dto.response.CommentResponse
-import com.android.personallifelessons.domain.model.Comment
-import kotlinx.coroutines.flow.Flow
+import com.android.personallifelessons.data.dto.response.GeneralResponse
+import retrofit2.Response
+import retrofit2.http.*
 
 interface CommentApi {
 
-    suspend fun getComments(
-        commentIds: List<String>
-    ): Flow<Outcome<List<CommentResponse>>>
-    suspend fun getComment(
-        commentId: String
-    ): Flow<Outcome<CommentResponse>>
-    suspend fun postComment(
-        comment: CommentRequest
-    ): Flow<Outcome<String>>
-    suspend fun updateComment(
-        comment: Comment
-    ): Flow<Outcome<String>>
+    @POST(".")
+    suspend fun addComment(
+        @Header("Authorization") token: String,
+        @Body commentRequest: CommentRequest
+    ): Response<GeneralResponse>
+
+    @DELETE(".")
     suspend fun deleteComment(
-        commentId: String
-    ): Flow<Outcome<String>>
+        @Header("Authorization") token :String,
+        @Query("id") commentId: String
+    ): Response<GeneralResponse>
+
+    @GET(".")
+    suspend fun getComments(
+        @Header("Authorization") token: String,
+        @Query("id") pllId: String
+    ): Response<List<CommentResponse>>
+
+    @PATCH(".")
+    suspend fun updateComment(
+        @Header("Authorization") token: String,
+        @Body commentUpdateRequest: CommentUpdateRequest
+    ): Response<GeneralResponse>
 }

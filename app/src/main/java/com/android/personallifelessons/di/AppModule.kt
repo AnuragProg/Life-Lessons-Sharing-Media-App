@@ -1,49 +1,90 @@
 package com.android.personallifelessons.di
 
+import androidx.work.WorkManager
 import com.android.personallifelessons.data.api.CategoryApi
 import com.android.personallifelessons.data.api.CommentApi
-import com.android.personallifelessons.data.api.DashboardApi
+import com.android.personallifelessons.data.api.PLLApi
 import com.android.personallifelessons.data.api.UserApi
-import com.android.personallifelessons.data.api.impl.CategoryApiImpl
-import com.android.personallifelessons.data.api.impl.CommentApiImpl
-import com.android.personallifelessons.data.api.impl.DashboardApiImpl
-import com.android.personallifelessons.data.api.impl.UserApiImpl
-import com.android.personallifelessons.data.repository.*
-import com.android.personallifelessons.domain.repository.*
-import com.android.personallifelessons.domain.room.SavedItemDatabase
+import com.android.personallifelessons.data.components.Constants
+import com.android.personallifelessons.data.repository.CategoryRepositoryImpl
+import com.android.personallifelessons.data.repository.CommentRepositoryImpl
+import com.android.personallifelessons.data.repository.PllRepositoryImpl
+import com.android.personallifelessons.data.repository.UserRepositoryImpl
+import com.android.personallifelessons.domain.datastore.UserDatastore
+import com.android.personallifelessons.domain.repository.CategoryRepository
+import com.android.personallifelessons.domain.repository.CommentRepository
+import com.android.personallifelessons.domain.repository.PllRepository
+import com.android.personallifelessons.domain.repository.UserRepository
+import com.android.personallifelessons.domain.room.PllDatabase
+import com.android.personallifelessons.domain.worker.LikeDislikeWorker
 import com.android.personallifelessons.presenter.category.CategoryViewModel
 import com.android.personallifelessons.presenter.comments.CommentViewModel
 import com.android.personallifelessons.presenter.dashboard.DashboardViewModel
-import com.android.personallifelessons.presenter.post.PostViewModel
-import com.android.personallifelessons.presenter.profile.ProfileViewModel
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
+import com.android.personallifelessons.presenter.login.LoginViewModel
+import com.android.personallifelessons.presenter.postAndUpdate.PostAndUpdatePllViewModel
+import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.androidx.workmanager.dsl.worker
 import org.koin.dsl.module
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+
+val workerModule = module{
+    single { WorkManager.getInstance(get()) }
+//    worker { LikeDislikeWorker(androidContext(), get()) }
+    worker{ LikeDislikeWorker(androidContext(), get())}
+}
 
 val appModule = module {
-    single { Firebase.database.reference }
-
-    single<CategoryApi>{ CategoryApiImpl(get()) }
-    single<CommentApi>{ CommentApiImpl(get()) }
-    single<DashboardApi>{ DashboardApiImpl(get()) }
-    single<UserApi>{ UserApiImpl(get()) }
-
-    single { SavedItemDatabase.getInstance(get()).savedItemDao }
+    single{ UserDatastore(androidContext()) }
+    single{ PllDatabase.getInstance(androidContext()).likedDislikedDao() }
 }
 
 val repositoryModule = module{
-    single<CategoryRepository>{ CategoryRepositoryImpl(get())}
+    single<CategoryRepository>{ CategoryRepositoryImpl(get(), get())}
     single<CommentRepository>{ CommentRepositoryImpl(get(), get()) }
-    single<DashBoardRepository>{ DashboardRepositoryImpl(get()) }
-    single<ProfileRepository>{ ProfileRepositoryImpl(get()) }
-    single<PostRepository>{ PostRepositoryImpl(get()) }
+    single<PllRepository>{ PllRepositoryImpl(get(), get()) }
+    single<UserRepository>{ UserRepositoryImpl(get(), get()) }
+}
+
+val networkModule = module{
+    single{
+        Retrofit.Builder()
+    }
+    single{
+        get<Retrofit.Builder>()
+            .baseUrl(Constants.USERBASEURL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(UserApi::class.java)
+    }
+    single{
+        get<Retrofit.Builder>()
+            .baseUrl(Constants.COMMENTBASEURL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(CommentApi::class.java)
+    }
+    single{
+        get<Retrofit.Builder>()
+            .baseUrl(Constants.PLLBASEURL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(PLLApi::class.java)
+    }
+    single{
+        get<Retrofit.Builder>()
+            .baseUrl(Constants.CATEGORYBASEURL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(CategoryApi::class.java)
+    }
 }
 
 val viewModelModule = module{
-    viewModel { params ->  DashboardViewModel(get(), get(), params.get()) }
-    viewModel { CategoryViewModel(get()) }
-    viewModel { params ->  CommentViewModel(get(), params.get())}
-    viewModel { params -> PostViewModel(get(), params[0], params[1]) }
-    viewModel { params -> ProfileViewModel(get(), params.get()) }
+    viewModel{ DashboardViewModel(get(), get(), get()) }
+    viewModel{ CategoryViewModel(get()) }
+    viewModel { params -> CommentViewModel(get(), params[0]) }
+    viewModel{ params -> PostAndUpdatePllViewModel(get(), get(), params[0])}
+    viewModel{ LoginViewModel(get()) }
 }

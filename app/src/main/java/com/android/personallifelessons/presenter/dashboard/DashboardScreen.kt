@@ -1,45 +1,72 @@
 package com.android.personallifelessons.presenter.dashboard
 
-import android.widget.Toast
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PostAdd
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
 import com.android.personallifelessons.components.Outcome
-import org.koin.androidx.compose.getViewModel
-import org.koin.core.parameter.parametersOf
+import com.android.personallifelessons.data.dto.response.Pll
+import com.android.personallifelessons.presenter.components.Destinations
+import com.android.personallifelessons.presenter.shared.ErrorPage
+import com.android.personallifelessons.presenter.shared.LoadingPage
+import com.android.personallifelessons.presenter.shared.PllCard
+import es.dmoral.toasty.Toasty
+import org.koin.androidx.compose.koinViewModel
+import java.util.*
+
 
 @OptIn(ExperimentalLifecycleComposeApi::class)
 @Composable
 fun DashboardScreen(
-    userId: String, navController: NavController,
+    viewModel: DashboardViewModel = koinViewModel(),
+    onNavigate: (Destinations, Pll?)->Unit,
 ) {
-    val viewModel = getViewModel<DashboardViewModel>{ parametersOf(userId) }
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ){
-        when (uiState) {
-            is Outcome.Error -> Toast.makeText(context, uiState.message!!, Toast.LENGTH_SHORT)
-                .show()
-            is Outcome.Loading -> CircularProgressIndicator()
-            is Outcome.Success -> {
-                Toast.makeText(context, uiState.data, Toast.LENGTH_SHORT).show()
-                PersonalLifeLessonLazyColumn(
-                    viewModel, navController
-                )
+    when(val state = uiState){
+        is Outcome.Error -> {
+            ErrorPage()
+            Toasty.error(context, state.error.message!!).show()
+        }
+        Outcome.Loading -> {
+            LoadingPage()
+        }
+        is Outcome.Success ->{
+            Box{
+                LazyColumn(modifier = Modifier.fillMaxSize()){
+                    items(viewModel.plls.value){ pll ->
+                        PllCard(
+                            pll = pll,
+                            onClick = {
+                                onNavigate(Destinations.COMMENT, it)
+                            },
+                            isOwner = { pll.userId == viewModel.userId.value },
+                            isLiked = { viewModel.isLiked(pll) },
+                            liked = {
+                                    viewModel.likePost(pll)
+                            },
+                            disliked = {
+                                viewModel.dislikePost(pll)
+                            }
+                        )
+                    }
+                }
+                Box(Modifier.fillMaxSize().padding(end=10.dp, bottom=10.dp), contentAlignment = Alignment.BottomEnd){
+                    FloatingActionButton(onClick = { onNavigate(Destinations.POSTANDUPDATE, null) }) {
+                        Icon(Icons.Filled.PostAdd, null)
+                    }
+                }
             }
         }
     }
@@ -47,8 +74,8 @@ fun DashboardScreen(
 
 
 
-@Preview(showSystemUi = true, showBackground = true)
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun PersonalLifeLessonLazyColumnPreview(){
-    DashboardScreen("", getViewModel{ parametersOf("") })
+fun DashboardScreenPreview() {
+    DashboardScreen() { _, _ -> }
 }

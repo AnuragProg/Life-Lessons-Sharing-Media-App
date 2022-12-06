@@ -1,14 +1,16 @@
 package com.android.personallifelessons.presenter.components
 
+import android.annotation.SuppressLint
 import java.text.SimpleDateFormat
 
+@SuppressLint("SimpleDateFormat")
 object TimestampConvertor {
 
-    fun longToFormattedDate(timestamp: Long): String{
+    private fun longToFormattedDate(timestamp: Long): String{
         val format = SimpleDateFormat("dd-MM-yyyy")
         return format.format(timestamp)
     }
-    fun longToFormattedTime(timestamp: Long): String{
+    private fun longToFormattedTime(timestamp: Long): String{
         val format = SimpleDateFormat("hh:mm a")
         return format.format(timestamp)
     }
