@@ -6,8 +6,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PostAdd
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
@@ -15,17 +17,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.personallifelessons.components.Outcome
 import com.android.personallifelessons.data.dto.request.PllRequest
 import com.android.personallifelessons.data.dto.response.Pll
+import com.android.personallifelessons.presenter.components.Destinations
 import es.dmoral.toasty.Toasty
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 
-@OptIn(ExperimentalLifecycleComposeApi::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalLifecycleComposeApi::class, ExperimentalMaterialApi::class,
+    ExperimentalComposeUiApi::class)
 @Composable
 fun PostAndUpdatePllScreen(
     pll: Pll? = null,
     viewModel: PostAndUpdatePllViewModel = koinViewModel{parametersOf(pll)},
-    navigateUp:()->Unit,
+    onNavigate:(Destinations)->Unit,
 ) {
     // To show to user
     val title by viewModel.title.collectAsStateWithLifecycle()
@@ -37,22 +41,26 @@ fun PostAndUpdatePllScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var loading by remember{ mutableStateOf(false) }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     // Keep track of uiState
-    when(uiState){
-        is Outcome.Error -> {
-            loading = false
-            Toasty.error(context, (uiState as Outcome.Error).error.message!!).show()
+    LaunchedEffect(uiState){
+        when(uiState){
+            is Outcome.Error -> {
+                loading = false
+                Toasty.error(context, (uiState as Outcome.Error).error.message!!).show()
+            }
+            Outcome.Loading ->{
+                loading = true
+            }
+            is Outcome.Success -> {
+                loading = false
+                keyboardController?.hide()
+                onNavigate(Destinations.DASHBOARD)
+                Toasty.success(context, (uiState as Outcome.Success).data).show()
+            }
+            null -> {}
         }
-        Outcome.Loading ->{
-            loading = true
-        }
-        is Outcome.Success -> {
-            loading = false
-
-            Toasty.success(context, (uiState as Outcome.Success).data).show()
-        }
-        null -> {}
     }
 
     Box{
@@ -144,6 +152,6 @@ fun PostAndUpdatePllScreenPreview() {
     "",
         ""
     )
-    PostAndUpdatePllScreen(navigateUp = {})
+    PostAndUpdatePllScreen(onNavigate = {})
 }
 

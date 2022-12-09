@@ -34,12 +34,14 @@ fun Index(){
     // Custom navigate function to keep track of current destination
     fun navigate(route: Destinations, arg: String? = null){
         arg?.let{
-            navController.navigate(route.route+"/$arg"){
+            val routeToNavigate = route.route+"/$arg"
+            navController.navigate(routeToNavigate){
                 launchSingleTop = true
             }
             return
         }
-        navController.navigate(route.route){
+        val routeToNavigate = route.route
+        navController.navigate(routeToNavigate){
             launchSingleTop = true
         }
     }
@@ -108,7 +110,7 @@ fun NavigationGraph(
             }catch(_: Exception){}
 
             if(pll!=null)
-                CommentScreen(pll = pll)
+                CommentScreen(initialPll = pll)
             else
                 CustomErrorMessagePage(msg = "Data transportation error")
         }
@@ -123,8 +125,8 @@ fun NavigationGraph(
             )
         ){
             val pll = it.arguments?.getString("pll")?.decodeToT<Pll>()
-            PostAndUpdatePllScreen(pll){
-                navController.navigateUp()
+            PostAndUpdatePllScreen(pll){ dest ->
+                navigate(dest,null)
             }
         }
     }

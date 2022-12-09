@@ -1,8 +1,10 @@
 package com.android.personallifelessons.presenter.components
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddToHomeScreen
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.PostAdd
 import androidx.compose.ui.graphics.vector.ImageVector
 
 
@@ -11,9 +13,9 @@ enum class Destinations(
     val icon: ImageVector?, val label: String
 ){
     DASHBOARD("dashboard", true, Icons.Filled.Dashboard, "Dashboard"),
+    POSTANDUPDATE("postAndUpdate", true, Icons.Filled.PostAdd, "Post"),
     CATEGORY("category", true, Icons.Filled.Category, "Categories"),
-    COMMENT("comment", false, null, "Comments"),
-    POSTANDUPDATE("postAndUpdate", false, null, "Post or Update"),
+    COMMENT("commentText", false, null, "Comments"),
 
 
     // Login

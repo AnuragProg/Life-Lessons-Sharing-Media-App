@@ -42,7 +42,7 @@
             android:name=".MainActivity"
             android:exported="false"
             android:theme="@style/Theme.PersonalLifeLessons"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustPan">
 <!--            <intent-filter>-->
 <!--                <action android:name="android.intent.action.MAIN" />-->
 

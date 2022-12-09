@@ -9,6 +9,7 @@ import com.android.personallifelessons.domain.models.LikedDislikedPll
 import com.android.personallifelessons.domain.models.toHashMap
 import com.android.personallifelessons.domain.repository.PllRepository
 import com.android.personallifelessons.domain.room.LikedDislikedDao
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -29,16 +30,21 @@ class DashboardViewModel(
     private val _plls = MutableStateFlow<List<Pll>>(emptyList())
     val plls get() = _plls.asStateFlow()
 
-    private val _userId = MutableStateFlow("")
-    val userId get() = _userId.asStateFlow()
-
     init{
 
-        viewModelScope.launch{
-            userDatastore.getUserId().collectLatest { if(it!=null)_userId.value = it }
-        }
+        loadPlls()
 
+        // Retrieving all saved pllids with property is liked to check whether given pll is liked or not
         viewModelScope.launch{
+            likedDislikedDao.getLikedDislikedPlls().map{ it.toHashMap() }.collectLatest{
+                likedDislikedPlls = it
+            }
+        }
+    }
+
+    private fun loadPlls(){
+        viewModelScope.launch{
+            _uiState.value = Outcome.Loading
             when(val response = pllRepo.getPlls()){
                 is Outcome.Error -> _uiState.value = Outcome.Error(response.error)
                 Outcome.Loading -> _uiState.value = Outcome.Loading
@@ -46,12 +52,6 @@ class DashboardViewModel(
                     _plls.value = response.data
                     _uiState.value = Outcome.Success("Successfully loaded posts")
                 }
-            }
-        }
-
-        viewModelScope.launch{
-            likedDislikedDao.getLikedDislikedPlls().map{ it.toHashMap() }.collectLatest{
-                likedDislikedPlls = it
             }
         }
     }
@@ -73,16 +73,35 @@ class DashboardViewModel(
         return pll.isLiked
     }
 
+    /**
+     * Stores liked post id with liked property locally for updating the server in future
+     */
     fun likePost(pll: Pll){
         viewModelScope.launch{
             likedDislikedDao.saveLikedDislikedPll(LikedDislikedPll(pll._id, true))
         }
     }
+
+    /**
+     * Stores liked post id with disliked property locally for updating the server in future
+     */
     fun dislikePost(pll: Pll){
         viewModelScope.launch{
             likedDislikedDao.saveLikedDislikedPll(LikedDislikedPll(pll._id, false))
         }
     }
 
+    /**
+     * Deletes the post and updates the pll posts
+     */
+    fun deletePost(pllId: String){
+        viewModelScope.launch{
+            // Delete the pll
+            pllRepo.deletePll(pllId)
 
+            // Update with new pll
+            loadPlls()
+        }
+
+    }
 }

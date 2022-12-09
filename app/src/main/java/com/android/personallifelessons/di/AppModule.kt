@@ -1,6 +1,7 @@
 package com.android.personallifelessons.di
 
 import androidx.work.WorkManager
+import com.android.personallifelessons.components.NetworkInterceptor
 import com.android.personallifelessons.data.api.CategoryApi
 import com.android.personallifelessons.data.api.CommentApi
 import com.android.personallifelessons.data.api.PLLApi
@@ -22,12 +23,16 @@ import com.android.personallifelessons.presenter.comments.CommentViewModel
 import com.android.personallifelessons.presenter.dashboard.DashboardViewModel
 import com.android.personallifelessons.presenter.login.LoginViewModel
 import com.android.personallifelessons.presenter.postAndUpdate.PostAndUpdatePllViewModel
+import okhttp3.OkHttpClient
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.androidx.workmanager.dsl.worker
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import org.koin.dsl.single
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 val workerModule = module{
     single { WorkManager.getInstance(get()) }
@@ -48,8 +53,19 @@ val repositoryModule = module{
 }
 
 val networkModule = module{
+
+    single(named("client1")){
+        OkHttpClient.Builder()
+            .addNetworkInterceptor(NetworkInterceptor(androidContext()))
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .writeTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
+            .build()
+    }
+
     single{
         Retrofit.Builder()
+            .client(get(named("client1")))
     }
     single{
         get<Retrofit.Builder>()
@@ -84,7 +100,7 @@ val networkModule = module{
 val viewModelModule = module{
     viewModel{ DashboardViewModel(get(), get(), get()) }
     viewModel{ CategoryViewModel(get()) }
-    viewModel { params -> CommentViewModel(get(), params[0]) }
+    viewModel { params -> CommentViewModel(get(), get(), get(), params[0]) }
     viewModel{ params -> PostAndUpdatePllViewModel(get(), get(), params[0])}
     viewModel{ LoginViewModel(get()) }
 }

@@ -9,7 +9,8 @@ data class PllResponse(
     val title: String,
     val userId: String,
     val username: String,
-    val likes: List<String>?
+    val likes: List<String>?,
+    val comments: List<String>
 )
 
 data class Pll(
@@ -22,11 +23,13 @@ data class Pll(
     val userId: String,
     val username: String,
     val likes: List<String>?,
-    val isLiked: Boolean
+    val isLiked: Boolean,
+    val isOwner: Boolean,
+    val comments: List<String>?
 )
 
 // For checking if user previously liked this post
-fun PllResponse.toPll(userId: String): Pll {
+fun PllResponse.toPll(uId: String): Pll {
     return Pll(
         _id = _id,
         categoryId = categoryId,
@@ -37,7 +40,9 @@ fun PllResponse.toPll(userId: String): Pll {
         userId = userId,
         username = username,
         likes = likes,
-        isLiked = if(likes!=null)userId in likes else false
+        isLiked = if(likes!=null)userId in likes else false,
+        isOwner = uId == userId,
+        comments = comments
     )
 }
 

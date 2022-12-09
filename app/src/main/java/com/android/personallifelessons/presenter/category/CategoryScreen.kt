@@ -17,9 +17,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.personallifelessons.components.Outcome
+import com.android.personallifelessons.components.ServerConnectionError
 import com.android.personallifelessons.data.dto.response.CategoryResponse
-import com.android.personallifelessons.presenter.shared.ErrorPage
+import com.android.personallifelessons.presenter.shared.NoDataErrorPage
 import com.android.personallifelessons.presenter.shared.LoadingPage
+import com.android.personallifelessons.presenter.shared.ServerErrorPage
 import es.dmoral.toasty.Toasty
 import org.koin.androidx.compose.koinViewModel
 
@@ -35,7 +37,9 @@ fun CategoryScreen(
 
     when(val state = uiState){
         is Outcome.Error -> {
-            ErrorPage()
+            if(state.error is ServerConnectionError)
+                ServerErrorPage()
+            else NoDataErrorPage()
             Toasty.error(context, state.error.message!!).show()
         }
         Outcome.Loading -> {

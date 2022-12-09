@@ -6,10 +6,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -17,52 +21,103 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.android.personallifelessons.data.dto.response.CommentResponse
-import com.android.personallifelessons.presenter.components.TimestampConvertor.dateThenTime
 import com.android.personallifelessons.R
 import com.android.personallifelessons.components.Outcome
+import com.android.personallifelessons.components.sharePll
+import com.android.personallifelessons.data.dto.response.CommentResponse
 import com.android.personallifelessons.data.dto.response.Pll
-import com.android.personallifelessons.data.dto.response.PllResponse
-import com.android.personallifelessons.presenter.shared.ErrorPage
+import com.android.personallifelessons.presenter.components.TimestampConvertor.dateThenTime
 import com.android.personallifelessons.presenter.shared.LoadingPage
+import com.android.personallifelessons.presenter.shared.NoDataErrorPage
 import com.android.personallifelessons.presenter.shared.PllCard
 import es.dmoral.toasty.Toasty
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import java.util.*
 
+enum class State{SUCCESS, ERROR, LOADING}
 
-@OptIn(ExperimentalLifecycleComposeApi::class)
+@OptIn(ExperimentalLifecycleComposeApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun CommentScreen(
-    pll: Pll,
-    viewModel: CommentViewModel = koinViewModel{ parametersOf(pll) }
+    initialPll: Pll,
+    viewModel: CommentViewModel = koinViewModel{ parametersOf(initialPll) }
 ) {
 
     val context = LocalContext.current
+
+    // for showing messages to user regarding any successful or unsuccessful operation
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    when(val state = uiState){
-        is Outcome.Error -> {
-            Toasty.error(context, state.error.message!!).show()
-            ErrorPage()
+    // Comments list to show to user
+    val commentsList by viewModel.commentsList.collectAsStateWithLifecycle()
+
+    // Comment text of the user
+    val commentText by viewModel.commentText.collectAsStateWithLifecycle()
+
+    // to hide keyboard on success/ failure
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    // to show appropriate screen to user
+    // Can only be updated from within LaunchedEffect
+    // hence preventing unnecessary recomposition
+    var state by remember{mutableStateOf<State?>(null)}
+
+    // Update pll so that when user comments
+    // A new pll will be shown to user with updated badge
+    val pll by viewModel.currentPll.collectAsStateWithLifecycle()
+
+    LaunchedEffect(uiState){
+        when(val ustate = uiState){
+            is Outcome.Error -> {
+                Toasty.error(context, ustate.error.message!!).show()
+            }
+            Outcome.Loading -> {
+                state = State.LOADING
+            }
+            is Outcome.Success ->{
+                Toasty.success(context, ustate.data).show()
+                state = State.SUCCESS
+                keyboardController?.hide()
+            }
         }
-        Outcome.Loading -> {
-            LoadingPage()
-        }
-        is Outcome.Success ->{
+    }
+
+    when(state){
+        State.SUCCESS ->{
             Box{
                 Column(Modifier.fillMaxSize()){
-                    PllCard(pll = pll)
                     LazyColumn(modifier=Modifier.fillMaxSize()){
-                        items(state.data){ comment ->
+                        item {
+                            PllCard(
+                                pll = pll, isLiked = {viewModel.isLiked()},
+                                liked = viewModel::likePost, disliked = viewModel::dislikePost,
+                                onShareClick = {context.sharePll(pll)},
+                                shouldShowDeleteButton = false
+                            )
+                            PostCommentCard(
+                                text = commentText, onTextChange = viewModel::setComment,
+                                onPostClicked = viewModel::postComment
+                            )
+                        }
+                        items(commentsList){ comment ->
                             CommentCard(comment = comment)
                         }
                     }
                 }
             }
         }
+        State.ERROR ->{
+            NoDataErrorPage()
+        }
+        State.LOADING -> {
+            LoadingPage()
+        }
+        null -> {}
     }
+
+
+
 }
 
 
@@ -104,6 +159,40 @@ fun CommentCard(comment: CommentResponse){
         }
     }
 }
+
+
+@Composable
+fun PostCommentCard(
+    text: String,
+    onTextChange: (String)->Unit,
+    onPostClicked: ()->Unit
+){
+    OutlinedTextField(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(10.dp),
+        value = text, onValueChange = onTextChange,
+        label = {
+            Text("Comment")
+        },
+        trailingIcon = {
+            IconButton(onClick = onPostClicked) {
+                Icon(Icons.Filled.Send, null)
+            }
+        },
+        shape = RoundedCornerShape(20.dp)
+    )
+}
+
+@Preview(showBackground=true)
+@Composable
+fun PostCommentCardPreview() {
+    var comment by remember{mutableStateOf("")}
+    PostCommentCard(text = comment, onTextChange = {comment=it}) {
+
+    }
+}
+
 
 @Preview()
 @Composable

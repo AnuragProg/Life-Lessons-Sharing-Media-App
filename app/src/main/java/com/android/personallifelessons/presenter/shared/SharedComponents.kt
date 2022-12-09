@@ -42,12 +42,23 @@ fun OverflowMenu(){
 @Composable
 fun PllCard(
     pll: Pll,
-    isOwner: ()->Boolean = {false},
+    // Initial value of the post
     isLiked: ()->Boolean = {false},
+    // User clicks on delete icon
+    onDeleteClick: ()->Unit = {},
+    // user clicks on like icon
     liked: (()->Unit)? = null,
+    // user again clicks on like icon making it to dislike
     disliked: (()->Unit)? = null,
-    onClick: ((Pll)->Unit)? = null
+    // user clicks on card
+    onClick: ((Pll)->Unit)? = null,
+    // user clicks commentText icon
+    onCommentClick : ()->Unit = {},
+    // user clicks share icon
+    onShareClick: ()->Unit = {},
+    shouldShowDeleteButton: Boolean = true
 ) {
+
     Card(
         modifier = Modifier.padding(10.dp),
         shape = RoundedCornerShape(10.dp),
@@ -124,6 +135,7 @@ fun PllCard(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ){
 
+
                 // For toggling like button
                 var likedIndicator by remember{mutableStateOf(isLiked())}
                 IconButton(onClick = {
@@ -135,18 +147,30 @@ fun PllCard(
                         true
                     }
                 }) {
-                    if(likedIndicator) Icon(Icons.Outlined.Favorite, null, tint= Color.Red)
-                    else Icon(Icons.Outlined.FavoriteBorder, null, tint= Color.Gray)
+                    BadgedBox(badge = {
+                        Badge{
+                            Text("${ (pll.likes?.size ?: 0) + if(likedIndicator) 1 else 0 }", color = Color.White)
+                        }
+                    }) {
+                        if(likedIndicator) Icon(Icons.Outlined.Favorite, null, tint= Color.Red)
+                        else Icon(Icons.Outlined.FavoriteBorder, null, tint= Color.Gray)
+                    }
+                }
+                IconButton(onClick = onCommentClick) {
+                    BadgedBox(badge = {
+                        Badge{
+                            Text("${pll.comments?.size ?: 0}", color = Color.White)
+                        }
+                    }) {
+                        Icon(Icons.Outlined.Comment, null, tint=Color.Gray)
+                    }
                 }
 
-                IconButton(onClick = { /*TODO*/ }) {
-                    Icon(Icons.Outlined.Comment, null, tint=Color.Gray)
-                }
-                IconButton(onClick = { /*TODO*/ }) {
+                IconButton(onClick = onShareClick) {
                     Icon(Icons.Outlined.Share, null, tint=Color.Gray)
                 }
-                if(isOwner()){
-                    IconButton(onClick = { /*TODO*/ }) {
+                if(pll.isOwner && shouldShowDeleteButton){
+                    IconButton(onClick = onDeleteClick) {
                         Icon(Icons.Outlined.Delete, null, tint=Color.Gray)
                     }
                 }
@@ -163,7 +187,7 @@ fun PllCardPreview(){
 }
 
 @Composable
-fun ErrorPage(){
+fun NoDataErrorPage(){
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
         val composition by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.error_no_data))
         val progress by animateLottieCompositionAsState(composition = composition, iterations = LottieConstants.IterateForever)
@@ -173,6 +197,16 @@ fun ErrorPage(){
     }
 }
 
+@Composable
+fun ServerErrorPage(){
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
+        val composition by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.bot_error_404))
+        val progress by animateLottieCompositionAsState(composition = composition, iterations = LottieConstants.IterateForever)
+        LottieAnimation(
+            composition = composition, progress = { progress }
+        )
+    }
+}
 @Composable
 fun CustomErrorMessagePage(msg: String){
     Box{
@@ -196,23 +230,43 @@ fun LoadingPage(){
 }
 
 
+/**
+ * @param onConfirm Action to do when user confirms
+ * @param onReject Action to do when user rejects
+ * @param hide Clean up action to hide
+ */
 @Composable
 fun DeleteConfirmationDialog(
     onConfirm: ()->Unit,
     onReject: ()->Unit,
+    hide: ()->Unit
 ){
-    var visible by remember{mutableStateOf(true)}
     AlertDialog(
-        onDismissRequest = { visible = false},
+        onDismissRequest = {
+            hide()
+            onReject()
+                           },
         confirmButton = {
-            Button(onClick = {onConfirm(); visible=false}){
+            TextButton(onClick = {
+                onConfirm()
+                hide()
+            }){
                 Text("Delete")
             }
         },
         dismissButton = {
-            Button(onClick = {onReject(); visible=false}){
+            TextButton(onClick = {
+                onReject()
+                hide()
+            }){
                 Text("Cancel")
             }
+        },
+        title = {
+            Text("Delete Confirmation")
+        },
+        text = {
+            Text("Do you want to delete this post?")
         }
     )
 }

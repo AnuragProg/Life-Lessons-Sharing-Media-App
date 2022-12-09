@@ -52,6 +52,11 @@ class PostAndUpdatePllViewModel(
     fun postOrUpdate(){
         if(category.value == null){
             _uiState.value = Outcome.Error(Exception("Select category"))
+            return
+        }
+        if(title.value.isBlank() || learning.value.isBlank() || relatedStory.value.isBlank()){
+            _uiState.value = Outcome.Error(Exception("No fields should be empty"))
+            return
         }
         if(previousPll!=null)
             updatePll(previousPll)
@@ -69,6 +74,7 @@ class PostAndUpdatePllViewModel(
 
     private fun postPll(){
         viewModelScope.launch{
+            _uiState.value = Outcome.Loading
             val pll = PllRequest(
                 title = title.value, learning = learning.value, relatedStory = relatedStory.value, categoryId = category.value!!._id
             )
