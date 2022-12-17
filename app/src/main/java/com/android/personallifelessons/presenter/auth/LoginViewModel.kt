@@ -1,4 +1,4 @@
-package com.android.personallifelessons.presenter.login
+package com.android.personallifelessons.presenter.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

@@ -3,20 +3,21 @@ package com.android.personallifelessons
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
 import com.airbnb.lottie.compose.*
+import com.android.personallifelessons.components.Outcome
 import com.android.personallifelessons.domain.datastore.UserDatastore
+import com.android.personallifelessons.domain.repository.UserRepository
 import com.android.personallifelessons.ui.theme.PersonalLifeLessonsTheme
-import kotlinx.coroutines.delay
+import es.dmoral.toasty.Toasty
 import kotlinx.coroutines.flow.first
 import org.koin.android.ext.android.inject
 
@@ -24,18 +25,20 @@ import org.koin.android.ext.android.inject
 class SplashScreen : ComponentActivity() {
 
     private val userDatastore : UserDatastore by inject()
+    private val userRepo : UserRepository by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
             PersonalLifeLessonsTheme {
-                val loginActivityIntent = Intent(this, LoginActivity::class.java)
+                val authActivityIntent = Intent(this, AuthActivity::class.java)
                 val dashboardActivityIntent = Intent(this, MainActivity::class.java)
                 Splash(
                     userDatastore = userDatastore,
+                    userRepo = userRepo,
                     navigateToLoginActivity = {
-                        startActivity(loginActivityIntent)
+                        startActivity(authActivityIntent)
                         finish()
                     },
                     navigateToDashboardActivity = {
@@ -51,20 +54,28 @@ class SplashScreen : ComponentActivity() {
 @Composable
 fun Splash(
     userDatastore: UserDatastore,
+    userRepo: UserRepository,
     navigateToLoginActivity: () -> Unit,
     navigateToDashboardActivity: () -> Unit
 ){
 
+    val context = LocalContext.current
     LaunchedEffect(Unit){
         val token = userDatastore.getToken().first()
         val userId = userDatastore.getUserId().first()
-        delay(5000)
-        if(token==null || userId==null)
-            navigateToLoginActivity()
-        else
+        Log.d("token", "datastore has token=$token && userId=$userId")
+        if(token!=null && userId!=null){
+            // login using token
+            val result = userRepo.signInWithToken()
+            if(result is Outcome.Error){
+                Toasty.error(context, result.error.message!!).show()
+                navigateToLoginActivity()
+                return@LaunchedEffect
+            }
             navigateToDashboardActivity()
+        }else
+            navigateToLoginActivity()
     }
-
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -76,7 +87,6 @@ fun Splash(
             progress = {progress}
         )
     }
-
 }
 
 

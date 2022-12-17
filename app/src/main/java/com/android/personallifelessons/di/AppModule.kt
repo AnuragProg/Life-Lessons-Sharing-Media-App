@@ -21,7 +21,8 @@ import com.android.personallifelessons.domain.worker.LikeDislikeWorker
 import com.android.personallifelessons.presenter.category.CategoryViewModel
 import com.android.personallifelessons.presenter.comments.CommentViewModel
 import com.android.personallifelessons.presenter.dashboard.DashboardViewModel
-import com.android.personallifelessons.presenter.login.LoginViewModel
+import com.android.personallifelessons.presenter.auth.LoginViewModel
+import com.android.personallifelessons.presenter.auth.SignUpViewModel
 import com.android.personallifelessons.presenter.postAndUpdate.PostAndUpdatePllViewModel
 import okhttp3.OkHttpClient
 import org.koin.android.ext.koin.androidContext
@@ -29,7 +30,6 @@ import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.androidx.workmanager.dsl.worker
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
-import org.koin.dsl.single
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
@@ -103,4 +103,5 @@ val viewModelModule = module{
     viewModel { params -> CommentViewModel(get(), get(), get(), params[0]) }
     viewModel{ params -> PostAndUpdatePllViewModel(get(), get(), params[0])}
     viewModel{ LoginViewModel(get()) }
+    viewModel{ SignUpViewModel(get()) }
 }

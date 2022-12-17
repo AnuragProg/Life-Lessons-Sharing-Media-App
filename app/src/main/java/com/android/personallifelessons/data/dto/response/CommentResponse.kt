@@ -6,5 +6,5 @@ data class CommentResponse(
     val userId: String,
     val username: String,
     val comment: String,
-    val commentedOn: Long
+    val commentedOn: String
 )

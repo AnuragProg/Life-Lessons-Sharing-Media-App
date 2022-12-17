@@ -17,20 +17,17 @@ import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity(), KoinComponent {
 
-    val workManager : WorkManager by inject()
+    private val workManager : WorkManager by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val userRep : UserRepository by inject()
         setContent {
             Index()
         }
     }
 
-
-    override fun onDestroy() {
-        super.onDestroy()
-
+    override fun onStop() {
+        super.onStop()
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.UNMETERED)
             .setRequiresBatteryNotLow(true)

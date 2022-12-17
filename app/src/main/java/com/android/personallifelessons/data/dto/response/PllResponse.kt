@@ -3,7 +3,7 @@ package com.android.personallifelessons.data.dto.response
 data class PllResponse(
     val _id: String,
     val categoryId: String,
-    val createdOn: Long,
+    val createdOn: String,
     val learning: String,
     val relatedStory: String,
     val title: String,
@@ -16,7 +16,7 @@ data class PllResponse(
 data class Pll(
     val _id: String,
     val categoryId: String,
-    val createdOn: Long,
+    val createdOn: String,
     val learning: String,
     val relatedStory: String,
     val title: String,

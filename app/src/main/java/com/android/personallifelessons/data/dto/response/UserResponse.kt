@@ -10,6 +10,6 @@ data class User(
     val _id: String,
     val username: String,
     val email: String,
-    val joinedOn: Long,
+    val joinedOn: String,
     val isAdmin: Boolean
 )

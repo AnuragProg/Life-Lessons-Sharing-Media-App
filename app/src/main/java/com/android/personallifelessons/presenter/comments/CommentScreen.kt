@@ -26,6 +26,7 @@ import com.android.personallifelessons.components.Outcome
 import com.android.personallifelessons.components.sharePll
 import com.android.personallifelessons.data.dto.response.CommentResponse
 import com.android.personallifelessons.data.dto.response.Pll
+import com.android.personallifelessons.presenter.components.TimestampConvertor
 import com.android.personallifelessons.presenter.components.TimestampConvertor.dateThenTime
 import com.android.personallifelessons.presenter.shared.LoadingPage
 import com.android.personallifelessons.presenter.shared.NoDataErrorPage
@@ -148,8 +149,8 @@ fun CommentCard(comment: CommentResponse){
                     )
                 }
                 Text(
-                    text=dateThenTime(comment.commentedOn, "\n"), fontWeight=FontWeight.Light, fontSize=10.sp
-                )
+                    text= TimestampConvertor.stringToDate(comment.commentedOn), fontWeight=FontWeight.Light, fontSize=10.sp
+                )//dateThenTime(comment.commentedOn, "\n")
             }
             Spacer(Modifier.height(8.dp))
 
@@ -197,10 +198,10 @@ fun PostCommentCardPreview() {
 @Preview()
 @Composable
 fun CommentCardPreview(){
-    val comment = CommentResponse(
-        "","","", "Anurag Singh", "It's amazing lesson to everyone", Calendar.getInstance().time.time
-    )
-    CommentCard(comment = comment)
+//    val comment = CommentResponse(
+//        "","","", "Anurag Singh", "It's amazing lesson to everyone", Calendar.getInstance().time.time
+//    )
+//    CommentCard(comment = comment)
 }
 
 

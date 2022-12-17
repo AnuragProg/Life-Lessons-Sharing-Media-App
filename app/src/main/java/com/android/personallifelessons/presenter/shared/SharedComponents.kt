@@ -21,6 +21,7 @@ import com.airbnb.lottie.compose.*
 import com.android.personallifelessons.R
 import com.android.personallifelessons.data.dto.response.Pll
 import com.android.personallifelessons.presenter.components.TimestampConvertor.dateThenTime
+import com.android.personallifelessons.presenter.components.TimestampConvertor.stringToDate
 
 
 /* For Update/Delete operations */
@@ -90,8 +91,8 @@ fun PllCard(
                     )
                 }
                 Text(
-                    text=dateThenTime(pll.createdOn, "\n"), fontWeight=FontWeight.Light, fontSize=10.sp
-                )
+                    text= stringToDate(pll.createdOn), fontWeight=FontWeight.Light, fontSize=10.sp
+                )//dateThenTime(pll.createdOn, "\n")
             }
 
             Spacer(Modifier.height(8.dp))

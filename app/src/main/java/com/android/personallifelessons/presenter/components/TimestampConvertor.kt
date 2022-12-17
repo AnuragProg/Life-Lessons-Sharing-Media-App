@@ -2,6 +2,8 @@ package com.android.personallifelessons.presenter.components
 
 import android.annotation.SuppressLint
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.util.*
 
 @SuppressLint("SimpleDateFormat")
 object TimestampConvertor {
@@ -22,4 +24,9 @@ object TimestampConvertor {
         return longToFormattedTime(timestamp) + separator + longToFormattedDate(timestamp)
     }
 
+    fun stringToDate(timestamp: String):String{
+        val format = SimpleDateFormat("dd-MM-yyyy\nHH:mm")
+        val instant = Instant.parse(timestamp)
+        return format.format(Date(instant.toEpochMilli()))
+    }
 }
