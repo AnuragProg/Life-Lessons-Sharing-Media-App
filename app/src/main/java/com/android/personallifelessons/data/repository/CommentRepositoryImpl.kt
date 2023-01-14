@@ -1,6 +1,7 @@
 package com.android.personallifelessons.data.repository
 
 import com.android.personallifelessons.components.ApiException
+import com.android.personallifelessons.components.CommonException
 import com.android.personallifelessons.components.GeneralMessages.TOKENNOTFOUND
 import com.android.personallifelessons.components.Outcome
 import com.android.personallifelessons.components.ServerConnectionError
@@ -20,48 +21,49 @@ class CommentRepositoryImpl(
 
 
     override suspend fun addComment(commentRequest: CommentRequest): Outcome<String> {
-        val token = userDatastore.getToken().first() ?: return Outcome.Error(Exception(TOKENNOTFOUND))
+        val token = userDatastore.getToken().first() ?: return Outcome.Error(CommonException(TOKENNOTFOUND))
         return try{
             val response = commentApi.addComment(token, commentRequest)
             if(response.isSuccessful)
                 Outcome.Success(response.body()!!.message)
-            else Outcome.Error(ApiException(response.errorBody()))
+            else Outcome.Error(ApiException(response.code(), response.errorBody()))
         }catch(e : SocketTimeoutException){
             Outcome.Error(ServerConnectionError("Unable to connect to server"))
         }
     }
 
     override suspend fun deleteComment(commentId: String): Outcome<String> {
-        val token = userDatastore.getToken().first() ?: return Outcome.Error(Exception(TOKENNOTFOUND))
+        val token = userDatastore.getToken().first() ?: return Outcome.Error(CommonException(TOKENNOTFOUND))
         return try{
             val response = commentApi.deleteComment(token, commentId)
             if(response.isSuccessful)
                  Outcome.Success(response.body()!!.message)
-            else Outcome.Error(ApiException(response.errorBody()))
+            else Outcome.Error(ApiException(response.code(), response.errorBody()))
         }catch(e : SocketTimeoutException){
             Outcome.Error(ServerConnectionError("Unable to connect to server"))
         }
     }
 
     override suspend fun getComments(pllId: String): Outcome<List<CommentResponse>> {
-        val token = userDatastore.getToken().first() ?: return Outcome.Error(Exception(TOKENNOTFOUND))
+        val token = userDatastore.getToken().first() ?: return Outcome.Error(CommonException(TOKENNOTFOUND))
         return try{
             val response = commentApi.getComments(token, pllId)
             if(response.isSuccessful)
                 Outcome.Success(response.body()!!)
-            else Outcome.Error(ApiException(response.errorBody()))
+            else Outcome.Error(
+                ApiException(response.code(), response.errorBody()))
         }catch(e : SocketTimeoutException){
             Outcome.Error(ServerConnectionError("Unable to connect to server"))
         }
     }
 
     override suspend fun updateComment(commentUpdateRequest: CommentUpdateRequest): Outcome<String> {
-        val token = userDatastore.getToken().first() ?: return Outcome.Error(Exception(TOKENNOTFOUND))
+        val token = userDatastore.getToken().first() ?: return Outcome.Error(CommonException(TOKENNOTFOUND))
         return try{
             val response = commentApi.updateComment(token, commentUpdateRequest)
             if(response.isSuccessful)
                 Outcome.Success(response.body()!!.message)
-            else Outcome.Error(ApiException(response.errorBody()))
+            else Outcome.Error(ApiException(response.code(), response.errorBody()))
         }catch(e : SocketTimeoutException){
             Outcome.Error(ServerConnectionError("Unable to connect to server"))
         }

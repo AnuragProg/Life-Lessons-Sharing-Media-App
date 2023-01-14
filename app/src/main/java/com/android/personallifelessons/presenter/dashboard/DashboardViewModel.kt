@@ -9,7 +9,6 @@ import com.android.personallifelessons.domain.models.LikedDislikedPll
 import com.android.personallifelessons.domain.models.toHashMap
 import com.android.personallifelessons.domain.repository.PllRepository
 import com.android.personallifelessons.domain.room.LikedDislikedDao
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -57,20 +56,17 @@ class DashboardViewModel(
     }
 
     /**
-     * First Checks in database for any manipulations done by user that are not updated on database yet
-     * For e.g liking a post or disliking a post
-     * If there is some value in the db then user manipulated the post and manipulation activity will be stored
-     * Otherwise default post status being liked or not displayed
+     * @return Pair( isThisValueCachedOne, isLiked )
      */
-    fun isLiked(pll: Pll): Boolean{
+    fun isLiked(pll: Pll): Pair<Boolean, Boolean>{
         // First checking for pll liked status in room db
         if(likedDislikedPlls.containsKey(pll._id))
-            return likedDislikedPlls[pll._id]!!
+            return Pair(true, likedDislikedPlls[pll._id]!!)
 
         // Doesn't exist in local cache that means no action performed by user on this post
 
         // Returning default like status
-        return pll.isLiked
+        return Pair(false, pll.isLiked)
     }
 
     /**

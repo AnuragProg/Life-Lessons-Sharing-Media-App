@@ -12,8 +12,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.android.personallifelessons.components.ApiException
 import com.android.personallifelessons.components.Outcome
 import com.android.personallifelessons.data.dto.request.PllRequest
 import com.android.personallifelessons.data.dto.response.Pll
@@ -23,12 +23,13 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 
-@OptIn(ExperimentalLifecycleComposeApi::class, ExperimentalMaterialApi::class,
+@OptIn(ExperimentalMaterialApi::class,
     ExperimentalComposeUiApi::class)
 @Composable
 fun PostAndUpdatePllScreen(
     pll: Pll? = null,
     viewModel: PostAndUpdatePllViewModel = koinViewModel{parametersOf(pll)},
+    moveToAuthActivity: ()->Unit,
     onNavigate:(Destinations)->Unit,
 ) {
     // To show to user
@@ -45,9 +46,14 @@ fun PostAndUpdatePllScreen(
 
     // Keep track of uiState
     LaunchedEffect(uiState){
-        when(uiState){
+        when(val state = uiState){
             is Outcome.Error -> {
                 loading = false
+
+                if(state.error is ApiException){
+                    if(state.error.code == 401)
+                        moveToAuthActivity()
+                }
                 Toasty.error(context, (uiState as Outcome.Error).error.message!!).show()
             }
             Outcome.Loading ->{
@@ -152,6 +158,6 @@ fun PostAndUpdatePllScreenPreview() {
     "",
         ""
     )
-    PostAndUpdatePllScreen(onNavigate = {})
+    PostAndUpdatePllScreen(onNavigate = {}, moveToAuthActivity = {})
 }
 

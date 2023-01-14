@@ -18,8 +18,8 @@ class LikeDislikeWorker(
     context: Context, workerParams: WorkerParameters
 ) : CoroutineWorker(context, workerParams), KoinComponent{
 
-    val likedDislikedDao : LikedDislikedDao by inject()
-    val pllRepo : PllRepository by inject()
+    private val likedDislikedDao : LikedDislikedDao by inject()
+    private val pllRepo : PllRepository by inject()
 
     override suspend fun doWork(): Result {
 

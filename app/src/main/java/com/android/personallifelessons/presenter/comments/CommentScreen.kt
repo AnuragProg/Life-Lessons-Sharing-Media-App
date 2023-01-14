@@ -19,30 +19,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.personallifelessons.R
+import com.android.personallifelessons.components.ApiException
 import com.android.personallifelessons.components.Outcome
 import com.android.personallifelessons.components.sharePll
 import com.android.personallifelessons.data.dto.response.CommentResponse
 import com.android.personallifelessons.data.dto.response.Pll
 import com.android.personallifelessons.presenter.components.TimestampConvertor
-import com.android.personallifelessons.presenter.components.TimestampConvertor.dateThenTime
 import com.android.personallifelessons.presenter.shared.LoadingPage
 import com.android.personallifelessons.presenter.shared.NoDataErrorPage
 import com.android.personallifelessons.presenter.shared.PllCard
 import es.dmoral.toasty.Toasty
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
-import java.util.*
 
 enum class State{SUCCESS, ERROR, LOADING}
 
-@OptIn(ExperimentalLifecycleComposeApi::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun CommentScreen(
     initialPll: Pll,
-    viewModel: CommentViewModel = koinViewModel{ parametersOf(initialPll) }
+    viewModel: CommentViewModel = koinViewModel{ parametersOf(initialPll) },
+    moveToAuthActivity: ()->Unit
 ) {
 
     val context = LocalContext.current
@@ -71,6 +70,10 @@ fun CommentScreen(
     LaunchedEffect(uiState){
         when(val ustate = uiState){
             is Outcome.Error -> {
+                if(ustate.error is ApiException){
+                    if(ustate.error.code == 401)
+                        moveToAuthActivity()
+                }
                 Toasty.error(context, ustate.error.message!!).show()
             }
             Outcome.Loading -> {

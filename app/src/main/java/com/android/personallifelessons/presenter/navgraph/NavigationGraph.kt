@@ -22,13 +22,16 @@ import com.android.personallifelessons.presenter.components.encodeToParcel
 import com.android.personallifelessons.presenter.dashboard.DashboardScreen
 import com.android.personallifelessons.presenter.postAndUpdate.PostAndUpdatePllScreen
 import com.android.personallifelessons.presenter.shared.CustomErrorMessagePage
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 
 @Composable
-fun Index(){
+fun Index(
+    moveToAuthActivity: () -> Unit
+){
     val navController = rememberNavController()
-
     var currentDestination by remember{mutableStateOf(Destinations.DASHBOARD)}
 
     // Custom navigate function to keep track of current destination
@@ -58,7 +61,7 @@ fun Index(){
 
     Scaffold(
         topBar = {
-                 AppBar(title = stringResource(id = R.string.app_name))
+                 AppBar(title = stringResource(id = R.string.app_name), signOut = moveToAuthActivity)
         },
         bottomBar = {
             if(currentDestination != Destinations.POSTANDUPDATE)
@@ -67,7 +70,7 @@ fun Index(){
                 }
         }
     ) { padding ->
-        NavigationGraph(padding = padding, navController = navController, navigate = ::navigate)
+        NavigationGraph(padding = padding, navController = navController, moveToAuthActivity = moveToAuthActivity,navigate = ::navigate)
     }
 
 }
@@ -78,6 +81,7 @@ fun Index(){
 fun NavigationGraph(
     padding: PaddingValues,
     navController: NavHostController,
+    moveToAuthActivity: () -> Unit,
     navigate: (route:Destinations, arg:String?) -> Unit,
 ){
     NavHost(modifier= Modifier.padding(padding),navController = navController, startDestination = Destinations.DASHBOARD.route){
@@ -85,7 +89,7 @@ fun NavigationGraph(
 
         composable(Destinations.DASHBOARD.route){
 
-            DashboardScreen{ dest: Destinations,  pll : Pll?->
+            DashboardScreen(moveToAuthActivity=moveToAuthActivity){ dest: Destinations,  pll : Pll?->
                 // On Personal life lesson post click
                 if(dest == Destinations.COMMENT && pll!=null){
                     navigate(Destinations.COMMENT, pll.encodeToParcel())
@@ -95,7 +99,7 @@ fun NavigationGraph(
         }
         
         composable(Destinations.CATEGORY.route){
-            CategoryScreen()
+            CategoryScreen(moveToAuthActivity=moveToAuthActivity)
         }
         
         composable(
@@ -110,7 +114,7 @@ fun NavigationGraph(
             }catch(_: Exception){}
 
             if(pll!=null)
-                CommentScreen(initialPll = pll)
+                CommentScreen(initialPll = pll, moveToAuthActivity = moveToAuthActivity)
             else
                 CustomErrorMessagePage(msg = "Data transportation error")
         }
@@ -125,7 +129,7 @@ fun NavigationGraph(
             )
         ){
             val pll = it.arguments?.getString("pll")?.decodeToT<Pll>()
-            PostAndUpdatePllScreen(pll){ dest ->
+            PostAndUpdatePllScreen(pll = pll, moveToAuthActivity = moveToAuthActivity){ dest ->
                 navigate(dest,null)
             }
         }

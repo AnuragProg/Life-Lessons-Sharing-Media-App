@@ -1,18 +1,17 @@
 package com.android.personallifelessons
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.lifecycleScope
 import androidx.work.*
-import com.android.personallifelessons.data.dto.request.SignInRequest
-import com.android.personallifelessons.data.dto.request.SignUpRequest
-import com.android.personallifelessons.domain.repository.UserRepository
+import com.android.personallifelessons.domain.datastore.UserDatastore
 import com.android.personallifelessons.domain.worker.LikeDislikeWorker
 import com.android.personallifelessons.presenter.navgraph.Index
+import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity(), KoinComponent {
@@ -22,12 +21,18 @@ class MainActivity : ComponentActivity(), KoinComponent {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Index()
+            Index(
+                moveToAuthActivity = {
+                    val startAuthActivityIntent = Intent(this, AuthActivity::class.java)
+                    startActivity(startAuthActivityIntent)
+                    finish()
+                }
+            )
         }
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onPause() {
+        super.onPause()
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.UNMETERED)
             .setRequiresBatteryNotLow(true)
@@ -35,7 +40,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
         val workRequest = OneTimeWorkRequestBuilder<LikeDislikeWorker>()
             .setConstraints(constraints)
-            .setBackoffCriteria(BackoffPolicy.LINEAR, 5, TimeUnit.MINUTES)
+            .setBackoffCriteria(BackoffPolicy.LINEAR, 5, TimeUnit.SECONDS)
             .build()
         workManager.enqueue(workRequest)
     }

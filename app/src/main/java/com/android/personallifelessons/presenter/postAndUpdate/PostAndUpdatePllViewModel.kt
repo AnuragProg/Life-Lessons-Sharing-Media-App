@@ -2,6 +2,7 @@ package com.android.personallifelessons.presenter.postAndUpdate
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.personallifelessons.components.CommonException
 import com.android.personallifelessons.components.Outcome
 import com.android.personallifelessons.data.dto.request.PllRequest
 import com.android.personallifelessons.data.dto.request.PllUpdateRequest
@@ -51,11 +52,11 @@ class PostAndUpdatePllViewModel(
 
     fun postOrUpdate(){
         if(category.value == null){
-            _uiState.value = Outcome.Error(Exception("Select category"))
+            _uiState.value = Outcome.Error(CommonException("Select category"))
             return
         }
         if(title.value.isBlank() || learning.value.isBlank() || relatedStory.value.isBlank()){
-            _uiState.value = Outcome.Error(Exception("No fields should be empty"))
+            _uiState.value = Outcome.Error(CommonException("No fields should be empty"))
             return
         }
         if(previousPll!=null)

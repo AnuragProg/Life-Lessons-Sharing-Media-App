@@ -44,7 +44,9 @@ fun OverflowMenu(){
 fun PllCard(
     pll: Pll,
     // Initial value of the post
-    isLiked: ()->Boolean = {false},
+    // First = isThisValueCachedOne
+    // Second = isLiked
+    isLiked: ()->Pair<Boolean, Boolean> = {Pair(false, false)},
     // User clicks on delete icon
     onDeleteClick: ()->Unit = {},
     // user clicks on like icon
@@ -140,20 +142,20 @@ fun PllCard(
                 // For toggling like button
                 var likedIndicator by remember{mutableStateOf(isLiked())}
                 IconButton(onClick = {
-                    likedIndicator = if(likedIndicator) {
+                    likedIndicator = if(likedIndicator.second) {
                         if(disliked!=null)disliked()
-                        false
+                        Pair(true,false)
                     }else{
                         if(liked!=null) liked()
-                        true
+                        Pair(true,true)
                     }
                 }) {
                     BadgedBox(badge = {
                         Badge{
-                            Text("${ (pll.likes?.size ?: 0) + if(likedIndicator) 1 else 0 }", color = Color.White)
+                            Text("${ (pll.likes?.size ?: 0) + if(likedIndicator.first && likedIndicator.second) 1 else 0 }", color = Color.White)
                         }
                     }) {
-                        if(likedIndicator) Icon(Icons.Outlined.Favorite, null, tint= Color.Red)
+                        if(likedIndicator.second) Icon(Icons.Outlined.Favorite, null, tint= Color.Red)
                         else Icon(Icons.Outlined.FavoriteBorder, null, tint= Color.Gray)
                     }
                 }

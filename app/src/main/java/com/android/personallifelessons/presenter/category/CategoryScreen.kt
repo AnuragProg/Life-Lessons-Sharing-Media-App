@@ -14,8 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.android.personallifelessons.components.ApiException
 import com.android.personallifelessons.components.Outcome
 import com.android.personallifelessons.components.ServerConnectionError
 import com.android.personallifelessons.data.dto.response.CategoryResponse
@@ -26,10 +26,10 @@ import es.dmoral.toasty.Toasty
 import org.koin.androidx.compose.koinViewModel
 
 
-@OptIn(ExperimentalLifecycleComposeApi::class)
 @Composable
 fun CategoryScreen(
-    viewModel: CategoryViewModel = koinViewModel()
+    viewModel: CategoryViewModel = koinViewModel(),
+    moveToAuthActivity: ()->Unit
 ){
 
     val context = LocalContext.current
@@ -39,6 +39,10 @@ fun CategoryScreen(
         is Outcome.Error -> {
             if(state.error is ServerConnectionError)
                 ServerErrorPage()
+            else if(state.error is ApiException){
+                if(state.error.code == 401)
+                    moveToAuthActivity()
+            }
             else NoDataErrorPage()
             Toasty.error(context, state.error.message!!).show()
         }

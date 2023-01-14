@@ -64,9 +64,14 @@ class CommentViewModel(
         viewModelScope.launch{likedDislikedDao.saveLikedDislikedPll(likeDislikePll = LikedDislikedPll(currentPll.value._id, false))}
     }
 
-    /** For checking whether post is liked or not*/
-    fun isLiked(): Boolean{
-        return _likedDislikedPlls[currentPll.value._id] ?: false
+    /**
+     * @return Pair( isThisValueCachedOne, isLiked )
+     */
+    fun isLiked(): Pair<Boolean, Boolean>{
+        if(_likedDislikedPlls.containsKey(currentPll.value._id)){
+            return Pair(true, _likedDislikedPlls[currentPll.value._id]!!)
+        }
+        return Pair(false, currentPll.value.isLiked)
     }
 
     private fun loadComments(){
@@ -123,7 +128,7 @@ class CommentViewModel(
             // posted commentText successfully
             // fetched commentText successfully
             // reset the commentText value
-            if(_uiState.value is Outcome.Success) _commentText.value = ""
+            _commentText.value = ""
             loadComments()
        }
     }
