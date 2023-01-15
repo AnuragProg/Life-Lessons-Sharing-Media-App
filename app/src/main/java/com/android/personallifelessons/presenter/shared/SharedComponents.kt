@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.sp
 import com.airbnb.lottie.compose.*
 import com.android.personallifelessons.R
 import com.android.personallifelessons.data.dto.response.Pll
-import com.android.personallifelessons.presenter.components.TimestampConvertor.dateThenTime
 import com.android.personallifelessons.presenter.components.TimestampConvertor.stringToDate
 
 
@@ -43,16 +42,16 @@ fun OverflowMenu(){
 @Composable
 fun PllCard(
     pll: Pll,
-    // Initial value of the post
-    // First = isThisValueCachedOne
-    // Second = isLiked
-    isLiked: ()->Pair<Boolean, Boolean> = {Pair(false, false)},
+    // Is Post liked or not (aggregate of local cache and what is the status on server)
+    isPostLiked: ()->Boolean,
+    // Is Post in Cache
+    isPostInCache: ()->Boolean,
     // User clicks on delete icon
     onDeleteClick: ()->Unit = {},
     // user clicks on like icon
-    liked: (()->Unit)? = null,
+    liked: (()->Unit),
     // user again clicks on like icon making it to dislike
-    disliked: (()->Unit)? = null,
+    disliked: (()->Unit),
     // user clicks on card
     onClick: ((Pll)->Unit)? = null,
     // user clicks commentText icon
@@ -94,7 +93,7 @@ fun PllCard(
                 }
                 Text(
                     text= stringToDate(pll.createdOn), fontWeight=FontWeight.Light, fontSize=10.sp
-                )//dateThenTime(pll.createdOn, "\n")
+                )
             }
 
             Spacer(Modifier.height(8.dp))
@@ -138,31 +137,57 @@ fun PllCard(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ){
 
+                var isLiked by remember{mutableStateOf( isPostLiked() )}
 
-                // For toggling like button
-                var likedIndicator by remember{mutableStateOf(isLiked())}
+                // if the post is in cache and liked then add 1
+                var likes by remember{
+                    mutableStateOf(
+                        /**
+                         * Post liked in cache
+                         *  if(remote post liked) likes
+                         *  else likes + 1
+                         * Post disliked in cache
+                         *  if(remote post liked) likes - 1
+                         *  else likes
+                         *  Post not in cache likes
+                         */
+                        if(isPostInCache() && isPostLiked()){
+                            if(pll.isPostLikedOnServer())
+                                pll.likes.size
+                            else pll.likes.size + 1
+                        }else if(isPostInCache() && !isPostLiked()){
+                            if(pll.isPostLikedOnServer())
+                                pll.likes.size-1
+                            else pll.likes.size
+                        }else
+                            pll.likes.size
+                    )
+                }
+
                 IconButton(onClick = {
-                    likedIndicator = if(likedIndicator.second) {
-                        if(disliked!=null)disliked()
-                        Pair(true,false)
-                    }else{
-                        if(liked!=null) liked()
-                        Pair(true,true)
+                    if(isLiked){
+                        isLiked = false
+                        likes--
+                        disliked()
+                    } else {
+                        isLiked = true
+                        likes++
+                        liked()
                     }
                 }) {
                     BadgedBox(badge = {
                         Badge{
-                            Text("${ (pll.likes?.size ?: 0) + if(likedIndicator.first && likedIndicator.second) 1 else 0 }", color = Color.White)
+                            Text("$likes", color = Color.White)
                         }
                     }) {
-                        if(likedIndicator.second) Icon(Icons.Outlined.Favorite, null, tint= Color.Red)
+                        if(isLiked) Icon(Icons.Outlined.Favorite, null, tint= Color.Red)
                         else Icon(Icons.Outlined.FavoriteBorder, null, tint= Color.Gray)
                     }
                 }
                 IconButton(onClick = onCommentClick) {
                     BadgedBox(badge = {
                         Badge{
-                            Text("${pll.comments?.size ?: 0}", color = Color.White)
+                            Text("${pll.comments.size}", color = Color.White)
                         }
                     }) {
                         Icon(Icons.Outlined.Comment, null, tint=Color.Gray)

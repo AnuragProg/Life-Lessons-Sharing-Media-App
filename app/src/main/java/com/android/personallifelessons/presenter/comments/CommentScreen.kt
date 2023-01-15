@@ -1,5 +1,6 @@
 package com.android.personallifelessons.presenter.comments
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +28,7 @@ import com.android.personallifelessons.components.sharePll
 import com.android.personallifelessons.data.dto.response.CommentResponse
 import com.android.personallifelessons.data.dto.response.Pll
 import com.android.personallifelessons.presenter.components.TimestampConvertor
+import com.android.personallifelessons.presenter.dashboard.DashboardViewModel
 import com.android.personallifelessons.presenter.shared.LoadingPage
 import com.android.personallifelessons.presenter.shared.NoDataErrorPage
 import com.android.personallifelessons.presenter.shared.PllCard
@@ -41,8 +43,14 @@ enum class State{SUCCESS, ERROR, LOADING}
 fun CommentScreen(
     initialPll: Pll,
     viewModel: CommentViewModel = koinViewModel{ parametersOf(initialPll) },
+    dashboardViewModel: DashboardViewModel,
     moveToAuthActivity: ()->Unit
 ) {
+
+    LaunchedEffect(Unit){
+        Log.d("viewmodel", "Comment Screen - comment viewmodel - $viewModel")
+        Log.d("viewmodel", "Comment Screen - dashboard viewmodel - $dashboardViewModel")
+    }
 
     val context = LocalContext.current
 
@@ -94,7 +102,9 @@ fun CommentScreen(
                     LazyColumn(modifier=Modifier.fillMaxSize()){
                         item {
                             PllCard(
-                                pll = pll, isLiked = {viewModel.isLiked()},
+                                pll = pll,
+                                isPostLiked = {dashboardViewModel.isPostLiked(pll)},
+                                isPostInCache ={ dashboardViewModel.isPostInCache(pll)},
                                 liked = viewModel::likePost, disliked = viewModel::dislikePost,
                                 onShareClick = {context.sharePll(pll)},
                                 shouldShowDeleteButton = false

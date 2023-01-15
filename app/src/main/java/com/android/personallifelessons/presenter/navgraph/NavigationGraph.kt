@@ -20,11 +20,13 @@ import com.android.personallifelessons.presenter.components.Destinations
 import com.android.personallifelessons.presenter.components.decodeToT
 import com.android.personallifelessons.presenter.components.encodeToParcel
 import com.android.personallifelessons.presenter.dashboard.DashboardScreen
+import com.android.personallifelessons.presenter.dashboard.DashboardViewModel
 import com.android.personallifelessons.presenter.postAndUpdate.PostAndUpdatePllScreen
 import com.android.personallifelessons.presenter.shared.CustomErrorMessagePage
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 
 @Composable
@@ -84,17 +86,21 @@ fun NavigationGraph(
     moveToAuthActivity: () -> Unit,
     navigate: (route:Destinations, arg:String?) -> Unit,
 ){
+
+    val dashboardViewModel = koinViewModel<DashboardViewModel>()
+
     NavHost(modifier= Modifier.padding(padding),navController = navController, startDestination = Destinations.DASHBOARD.route){
 
 
         composable(Destinations.DASHBOARD.route){
 
-            DashboardScreen(moveToAuthActivity=moveToAuthActivity){ dest: Destinations,  pll : Pll?->
+            DashboardScreen(viewModel = dashboardViewModel, moveToAuthActivity=moveToAuthActivity){ dest: Destinations,  pll : Pll?->
                 // On Personal life lesson post click
                 if(dest == Destinations.COMMENT && pll!=null){
                     navigate(Destinations.COMMENT, pll.encodeToParcel())
                 }else
                     navigate(dest, null)
+                
             }
         }
         
@@ -114,7 +120,7 @@ fun NavigationGraph(
             }catch(_: Exception){}
 
             if(pll!=null)
-                CommentScreen(initialPll = pll, moveToAuthActivity = moveToAuthActivity)
+                CommentScreen(initialPll = pll, dashboardViewModel = dashboardViewModel, moveToAuthActivity = moveToAuthActivity)
             else
                 CustomErrorMessagePage(msg = "Data transportation error")
         }

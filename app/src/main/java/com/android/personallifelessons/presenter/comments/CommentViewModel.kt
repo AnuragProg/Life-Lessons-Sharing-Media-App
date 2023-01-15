@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import org.koin.core.KoinApplication.Companion.init
 
 class CommentViewModel(
     private val commentRepo: CommentRepository,
@@ -39,21 +38,21 @@ class CommentViewModel(
     private val _currentPll = MutableStateFlow(initialPll)
     val currentPll get() = _currentPll.asStateFlow()
 
-    private var _likedDislikedPlls = HashMap<String, Boolean>()
 
     init{
         loadComments()
-
         // retrieving updated pll for initial pll card
         viewModelScope.launch{pllRepo.getPll(currentPll.value._id).also{if(it is Outcome.Success) _currentPll.value = it.data }}
 
         viewModelScope.launch{
-            likedDislikedDao.getLikedDislikedPlls().map{it.toHashMap()}.collectLatest {
-                _likedDislikedPlls = it
+            _currentPll.collectLatest{
+
             }
         }
-
     }
+
+
+
 
     fun setComment(comment: String) { _commentText.value = comment}
 
@@ -62,16 +61,6 @@ class CommentViewModel(
     }
     fun dislikePost(){
         viewModelScope.launch{likedDislikedDao.saveLikedDislikedPll(likeDislikePll = LikedDislikedPll(currentPll.value._id, false))}
-    }
-
-    /**
-     * @return Pair( isThisValueCachedOne, isLiked )
-     */
-    fun isLiked(): Pair<Boolean, Boolean>{
-        if(_likedDislikedPlls.containsKey(currentPll.value._id)){
-            return Pair(true, _likedDislikedPlls[currentPll.value._id]!!)
-        }
-        return Pair(false, currentPll.value.isLiked)
     }
 
     private fun loadComments(){
@@ -85,7 +74,6 @@ class CommentViewModel(
                 is Outcome.Error -> _uiState.value = response
                 Outcome.Loading -> _uiState.value = Outcome.Loading
             }
-
         }
     }
 

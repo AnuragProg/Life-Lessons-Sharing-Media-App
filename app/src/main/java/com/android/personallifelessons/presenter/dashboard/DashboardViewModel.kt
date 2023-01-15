@@ -1,5 +1,6 @@
 package com.android.personallifelessons.presenter.dashboard
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.personallifelessons.components.Outcome
@@ -55,18 +56,23 @@ class DashboardViewModel(
         }
     }
 
+    fun isPostInCache(pll: Pll): Boolean = likedDislikedPlls.contains(pll._id)
+
+    private fun isPostLikedInCache(pll: Pll) :Boolean = likedDislikedPlls[pll._id]?:false
+
     /**
-     * @return Pair( isThisValueCachedOne, isLiked )
+     * Check whether there is record in cache
+     * if true:
+     *      @return status of the post (liked or not liked)
+     * Check whether the post is liked in remote server
      */
-    fun isLiked(pll: Pll): Pair<Boolean, Boolean>{
-        // First checking for pll liked status in room db
-        if(likedDislikedPlls.containsKey(pll._id))
-            return Pair(true, likedDislikedPlls[pll._id]!!)
-
-        // Doesn't exist in local cache that means no action performed by user on this post
-
-        // Returning default like status
-        return Pair(false, pll.isLiked)
+    fun isPostLiked(pll: Pll): Boolean{
+        if(isPostInCache(pll)){
+            Log.d("post", "Post is in cache and is ${isPostLikedInCache(pll)}")
+            return isPostLikedInCache(pll)
+        }
+        Log.d("post", "Post is ${pll.isPostLikedOnServer()} = liked on server")
+        return pll.isPostLikedOnServer()
     }
 
     /**

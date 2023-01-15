@@ -68,7 +68,7 @@ fun Splash(
             // login using token
             val result = userRepo.signInWithToken()
             if(result is Outcome.Error){
-                Toasty.error(context, result.error.message!!).show()
+                Toasty.error(context, result.error.message).show()
                 navigateToLoginActivity()
                 return@LaunchedEffect
             }

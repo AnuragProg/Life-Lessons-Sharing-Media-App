@@ -1,5 +1,6 @@
 package com.android.personallifelessons.presenter.dashboard
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,61 +24,64 @@ import java.util.*
 
 @Composable
 fun DashboardScreen(
-    viewModel: DashboardViewModel = koinViewModel(),
+    viewModel: DashboardViewModel,
     moveToAuthActivity: ()->Unit,
     onNavigate: (Destinations, Pll?)->Unit,
 ) {
     val context = LocalContext.current
-    var state by remember{mutableStateOf<Outcome<String>>(Outcome.Loading)}
+    var state by remember { mutableStateOf<Outcome<String>>(Outcome.Loading) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var showDeleteConfirmation by remember{mutableStateOf(false)}
-    var pllId by remember{mutableStateOf<String?>(null)}
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var pllId by remember { mutableStateOf<String?>(null) }
     val plls by viewModel.plls.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit) {
+        Log.d("viewmodel", "DashboardScreen - viewmodel - $viewModel")
+    }
 
-    if(showDeleteConfirmation){
+    if (showDeleteConfirmation) {
         DeleteConfirmationDialog(
             onConfirm = { viewModel.deletePost(pllId!!) },
             onReject = {},
             hide = {
-              showDeleteConfirmation = false
+                showDeleteConfirmation = false
                 pllId = null
             }
         )
     }
 
-    LaunchedEffect(uiState){
+    LaunchedEffect(uiState) {
         state = uiState
     }
 
 
-    when(state){
+    when (state) {
         is Outcome.Error -> {
-            if((state as Outcome.Error).error is ServerConnectionError)
+            if ((state as Outcome.Error).error is ServerConnectionError)
                 ServerErrorPage()
-            else if((state as Outcome.Error). error is ApiException){
-                if((state as Outcome.Error).error.code == 401)
+            else if ((state as Outcome.Error).error is ApiException) {
+                if ((state as Outcome.Error).error.code == 401)
                     moveToAuthActivity()
-            }
-            else NoDataErrorPage()
+            } else NoDataErrorPage()
             Toasty.error(context, (state as Outcome.Error).error.message).show()
         }
         Outcome.Loading -> {
             LoadingPage()
         }
-        is Outcome.Success ->{
-            if(plls.isEmpty()){
+        is Outcome.Success -> {
+            if (plls.isEmpty()) {
                 NoDataErrorPage()
-            }else{
-                Box{
-                    LazyColumn(modifier = Modifier.fillMaxSize()){
-                        items(plls){ pll ->
+            } else {
+                Box {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(plls) { pll ->
                             PllCard(
                                 pll = pll,
+                                isPostLiked = { viewModel.isPostLiked(pll) },
+                                isPostInCache = { viewModel.isPostInCache(pll) },
                                 onClick = {
                                     onNavigate(Destinations.COMMENT, it)
                                 },
-                                isLiked = { viewModel.isLiked(pll) },
                                 liked = {
                                     viewModel.likePost(pll)
                                 },
@@ -86,7 +90,7 @@ fun DashboardScreen(
                                 },
                                 onDeleteClick = {
                                     pllId = pll._id
-                                    showDeleteConfirmation=true
+                                    showDeleteConfirmation = true
                                 },
                                 onCommentClick = {
                                     onNavigate(Destinations.COMMENT, pll)
@@ -101,12 +105,4 @@ fun DashboardScreen(
             }
         }
     }
-}
-
-
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun DashboardScreenPreview() {
-    DashboardScreen(moveToAuthActivity = {}) { _, _ -> }
 }
