@@ -38,6 +38,7 @@ fun Index(
 
     // Custom navigate function to keep track of current destination
     fun navigate(route: Destinations, arg: String? = null){
+        navController.popBackStack()
         arg?.let{
             val routeToNavigate = route.route+"/$arg"
             navController.navigate(routeToNavigate){
@@ -63,7 +64,9 @@ fun Index(
 
     Scaffold(
         topBar = {
-                 AppBar(title = stringResource(id = R.string.app_name), signOut = moveToAuthActivity)
+                 AppBar(title = stringResource(id = R.string.app_name), signOut = moveToAuthActivity, currentDestination = currentDestination){ dest ->
+                     navigate(route = dest)
+                 }
         },
         bottomBar = {
             if(currentDestination != Destinations.POSTANDUPDATE)
@@ -100,7 +103,7 @@ fun NavigationGraph(
                     navigate(Destinations.COMMENT, pll.encodeToParcel())
                 }else
                     navigate(dest, null)
-                
+
             }
         }
         

@@ -1,11 +1,13 @@
 package com.android.personallifelessons.presenter.components
 
+import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddToHomeScreen
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.PostAdd
 import androidx.compose.ui.graphics.vector.ImageVector
+import kotlin.collections.Map.Entry
 
 
 enum class Destinations(
@@ -24,11 +26,12 @@ enum class Destinations(
     LOGINSUCCESSFUL("loginSuccessful", false, null, "Login Successful");
 
     companion object{
+
+        private val destinations = hashMapOf(*(values().map{Pair(it.route, it)}.toTypedArray()))
         fun findDestination(route: String): Destinations{
-            values().forEach{ dest ->
-                if(dest.route in route) return dest
-            }
-            throw Exception("Destination not found")
+            Log.d("destinations", "Requested route is $route")
+            val parsedRoute = route.split("?")[0].split("/")[0]
+            return destinations[parsedRoute] ?: throw Exception("Destination not found")
         }
     }
 }
